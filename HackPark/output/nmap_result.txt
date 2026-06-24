@@ -1,0 +1,22 @@
+# Nmap 7.94SVN scan initiated Wed Jun 24 06:14:52 2026 as: nmap -sV -sC -T5 -p- -A -O -Pn --min-rate 1000 -o /root/active/output/nmap_result.txt -vvv 10.113.155.246
+Nmap scan report for 10.113.155.246
+Host is up, received user-set.
+Scanned at 2026-06-24 06:14:52 CDT for 149s
+All 65535 scanned ports on 10.113.155.246 are in ignored states.
+Not shown: 65535 filtered tcp ports (no-response)
+Too many fingerprints match this host to give specific OS details
+TCP/IP fingerprint:
+SCAN(V=7.94SVN%E=4%D=6/24%OT=%CT=%CU=%PV=Y%G=N%TM=6A3BBCC1%P=aarch64-unknown-linux-gnu)
+SEQ()
+U1(R=N)
+IE(R=N)
+
+
+TRACEROUTE (using proto 1/icmp)
+HOP RTT      ADDRESS
+1   60.18 ms 192.168.128.1
+2   ... 30
+
+Read data files from: /usr/bin/../share/nmap
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Wed Jun 24 06:17:21 2026 -- 1 IP address (1 host up) scanned in 149.27 seconds
