@@ -1,9 +1,15 @@
-🤡 HackPark - TryHackMe Write-up
+## 🐲 Team - TryHackMe Write-up
 
 ## 📌 Overview
+A beginner friendly boot2root machine, 
 
 Target IP: 10.112.162.190
 
+> Note: I suggest people who try this room to go over the following rooms before:
+> - nmap
+> - gobuster
+> - ffuf
+> - file inclusion
 
 ---
 
@@ -102,14 +108,109 @@ ftp 10.112.162.190
 and entered the Username and Password. the service had passive mode enabled so using "passive" command I disabled it and got to work:
 <img width="1361" height="483" alt="Screen Shot 2026-06-27 at 13 26 10 PM" src="https://github.com/user-attachments/assets/93a86ba6-4da9-4e98-a647-ab225e3b7a21" />
 
-I figured that the message talks about a subdomain within tema.thm so I added it as hostname at /etc/hosts and checked the website.
+I figured that the message talks about a subdomain within team.thm so I added it as hostname at /etc/hosts and checked the website.
 
 ---
 
+## 6. Viewing the website: 👀
+When logging into the web page at the subdomain we can see the a link that transfers us to:
+> http://dev.team.thm/script.php?page=teamshare.php
+
+I saw the "?page=" with a file after it and checked for LFI by replacing "teamshare.php" with "/etc/passwd". Vulnerability was found succesfully.
+
+I wanted to find the names of the users in the system so I used the command:
+```bash
+curl 'http://dev.team.thm/script.php?page=/etc/passwd' | grep /bin/bash
+```
+
+and got a hit on:
+- root
+- dale
+- gyles
+
+---
+
+## 7. Fuzzing ?page= for intersting files: 📁
+I used FFUF to and seclists to find intersting files I have access to that are bigger in size than "1" using the following command:
+```bash
+ffuf -u 'http://dev.team.thm/script.php?page=FUZZ' -w wordlists/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt -t 64 -fs 1
+```
+results are in [outputs/ffuf.results](outputs/ffuf.results).
+
+An intersting find was at /etc/ssh/sshd_config. remember Gyles said to Dale: "make a copy of your "id_rsa" and place this in the relevent config file."? well, he did.
+it was there:
+
+<img width="439" height="514" alt="Screen Shot 2026-06-27 at 19 34 43 PM" src="https://github.com/user-attachments/assets/44f2b2a6-495d-400a-acbc-915202d19192" />
+
+since it was used as a comment with "#" I used Cyberchef to replace the "#" with nothing:
+
+<img width="1403" height="997" alt="Screen Shot 2026-06-27 at 19 37 43 PM" src="https://github.com/user-attachments/assets/11befe9e-1e80-47b1-817c-4abacd017c9d" />
+
+I saved the key using:
+```bash
+leafpad id_rsa
+```
+
+Well. now that I have the key and username, I want to try a ssh connection.
+
+---
+
+## 8. Connecting using SSH: 🔐
+(Paused for lunch here and the machine turned off. I restarted it and it changed it's IP to 10.112.174.79)
+I had an error saying the key is not protected because it's permissions should only allow me to use it. so I changed the permissions to 600 using:
+
+```bash
+chmod 600 id_rsa
+```
+
+and now it worked!
+<img width="803" height="326" alt="Screen Shot 2026-06-27 at 19 48 24 PM" src="https://github.com/user-attachments/assets/efd682b6-2143-4f31-88b9-07d6bf013d61" />
+
+---
+
+## 9. Privilege Escaltion: 🧗🏼‍♂️
+I checked what commands I can sudo and found: "/home/gyles/admin_checks"
+I checked the code and analyzed it for vulnerabities. I found it takes any error from the date stamp and executes it. I wanted to manipulate it to get a shell as gyles.
+<img width="1178" height="836" alt="Screen Shot 2026-06-27 at 20 00 33 PM" src="https://github.com/user-attachments/assets/1c94dfb7-b377-4277-b0d2-b5feff9b71ed" />
+
+In the attempt above, I used the "admin_checks" as gyles, used the vulnerability in the error handling method, used it to make a shell command and created a shell using:
+```python
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+```
+
+## 10. You guessed it, MORE ESCALATION!! 🔝
+I tried getting to root but didn't have the permissions needed. I tried to check for sudo commands but needed a password so I skipped. I checked for running processes with "ps aux" but the processes were cut out:
+
+<img width="919" height="1084" alt="Screen Shot 2026-06-27 at 20 06 08 PM" src="https://github.com/user-attachments/assets/e21ba4ae-bad7-4f44-b982-bddd5027c5c5" />
+
+I used "ps auxww" after checking how to expand it and didn't find something useful.
+
+I checked "journalctl" to see if there was any recent activity by root that I may be able to manipulate. nothing found yet.
+
+I tried checking with crontab for any root activity and didn't find any for mine or root.
+<img width="799" height="513" alt="Screen Shot 2026-06-27 at 20 19 18 PM" src="https://github.com/user-attachments/assets/98edf13e-9aec-49da-b1b7-19099b02e2b5" />
+
+I then tried checking specificly for scheduled tasks in the /var/log/syslog using:
+
+```bash
+grep -i cron /var/log/syslog
+```
+
+Nothing.
+<img width="562" height="39" alt="Screen Shot 2026-06-27 at 20 21 33 PM" src="https://github.com/user-attachments/assets/5c49b3a0-b5c8-4e5a-90e6-1d46bbcdab8e" />
+
+I got stuck a little bit and checked deeper in my home directory using ls -a for hidden files:
+<img width="562" height="39" alt="Screen Shot 2026-06-27 at 20 21 33 PM" src="https://github.com/user-attachments/assets/9b03caa5-81c6-4518-ac07-bce7b2e8c6e2" />
+
+.sudo_as_admin_successful was an empty file.
+I checked .bash_history to find clues, here is what I could understand and find:
+
+1. the user created a reverse shell using php at /usr/bin/php
+2. 
 
 ## Flags: 🏁 
-In progres...
-
+user.txt - /home/dale/user.txt - THM{6Y0...}
+root.txt - in progress..
 
 ---
 
