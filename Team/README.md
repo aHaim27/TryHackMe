@@ -227,7 +227,7 @@ I looked into /opt/admin_stuff and found the script.sh:
 
 <img width="567" height="262" alt="צילום מסך 2026-06-28 ב-9 20 15" src="https://github.com/user-attachments/assets/46db0a14-3891-40bd-af2c-a334558fadac" />
 
-So now I know main_backup.sh and dev.backup.sh runs automatically every minute due to the cronjob but I don't know by who. using ps auxww didn't help catching the process so I looked for a tool that could help me list all the processes and scripts running on the machine WITHOUT root access. I stumbled across pspy. I looked for a training related to it and found one at [Privelege Escalation Training](https://tryhackme.com/module/privilegeescalation) and I hadn't studied it yet so I took a break and learned it.
+So now I know main_backup.sh and dev.backup.sh runs automatically every minute due to the cronjob but I don't know by who. using ps auxww didn't help catching the process so I looked for a tool that could help me list all the processes and scripts running on the machine WITHOUT root access. I stumbled across [pspy](https://github.com/dominicbreuker/pspy). I looked for a training related to it and found one at [Privelege Escalation Training](https://tryhackme.com/module/privilegeescalation) and I hadn't studied it yet so I took a break and learned it.
 
 ---
 
