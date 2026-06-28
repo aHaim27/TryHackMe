@@ -62,7 +62,6 @@ I used the following command to check for any directories, ".txt" files and ".ph
 gobuster dir -u 'http://team.thm' -w /usr/share/wordlists/dirb/big.txt -x .txt,.php -t 64
 ```
 
-at first the command made the connection drop so I downloaded the TCP OpenVPN file instead of the recommended from TryHackMe and it solved the situation.
 
 I got the following results:
 <img width="1314" height="767" alt="Screen Shot 2026-06-27 at 13 01 41 PM" src="https://github.com/user-attachments/assets/35797d39-d74c-4938-952e-5c2da706db7d" />
@@ -72,7 +71,7 @@ When checking the contents of "robots.txt" I found it had the following string i
 
 > "dave"
 
-I figured it might be some user of the system. I didn't have access to /scripts and /assets so I used gobuster to enumerate them too:
+I figured it might be some user of the system. I tried accessing them manually but didn't have access to /scripts and /assets, so I used gobuster to enumerate them too:
 
 /scripts:
 <img width="1693" height="991" alt="Screen Shot 2026-06-27 at 13 04 06 PM" src="https://github.com/user-attachments/assets/ac6f4038-aa1b-4b67-89da-fab026926c42" />
@@ -90,7 +89,7 @@ Reading this file showed me the directory has a file named "script" that had a d
 ---
 
 ## 4. Using FFUF to find the extension of the old "script" file: 👴🏼
-Since scripts.txt refrenced an older version of the script named "script" as well but didn't mention it's new extension, I used FFUF with the next command to fuzz and search for the extension on 'http://team.thm/scripts' and got the following hit!
+Since scripts.txt referenced an older version of the script named "script" as well but didn't mention its new extension, I used FFUF with the next command to fuzz and search for the extension on 'http://team.thm/scripts' and got the following hit!
 
 ```bash
 ffuf -u 'http://team.thm/scripts/script.FUZZ' -w /usr/share/wordlists/Seclists/Discovery/Web-Content/big.txt
@@ -98,7 +97,7 @@ ffuf -u 'http://team.thm/scripts/script.FUZZ' -w /usr/share/wordlists/Seclists/D
 
 <img width="1548" height="625" alt="Screen Shot 2026-06-27 at 13 13 54 PM" src="https://github.com/user-attachments/assets/eb841abe-e4f1-46df-846d-325c71ada6ad" />
 
-Pretty easy to understand which extension is related to the old version here. I inspected the contents and got the following creds:
+The .old extension clearly indicated the old version of the referenced script file. I inspected the contents and got the following creds:
 <img width="1524" height="910" alt="ffuf_scan" src="https://github.com/user-attachments/assets/27839e8e-c95b-4289-b91b-c40d6c8331c2" />
 
 ---
@@ -115,11 +114,11 @@ I figured that the message talks about a subdomain within team.thm so I configur
 
 ---
 
-## 6. Viewing the website: 👀
+## 6. Viewing the website and exploiting a vulnerability: 👀
 When logging into the web page at the subdomain we can see the a link that transfers us to:
 > http://dev.team.thm/script.php?page=teamshare.php
 
-I saw the "?page=" with a file after it and tried checking for LFI by replacing "teamshare.php" with "/etc/passwd" to kill 2 birds with one stone. verify a suspicious LFI vulnerability and enumerate valid local users. The vulnerability was executed successfully and I got names.
+I saw the "?page=" with a file after it and tried checking for LFI by replacing "teamshare.php" with "/etc/passwd" to kill 2 birds with one stone. verify a suspicious LFI vulnerability and enumerate valid local users. I managed to confirm the LFI vulnerability and was given the contents of /etc/passwd.
 
 I wanted to filter the names of the users in the system so I used the terminal with the command:
 ```bash
@@ -134,14 +133,14 @@ and got a hit on:
 ---
 
 ## 7. Fuzzing ?page= for interesting files: 📁
-I used FFUF and seclists to find intersting files that I could access. I filtered the results for ones that are bigger in size than "1" using the following command:
+I used FFUF and seclists to find interesting files that I could access. I filtered the results for ones that are bigger in size than "1" using the following command:
 
 ```bash
 ffuf -u 'http://dev.team.thm/script.php?page=FUZZ' -w wordlists/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt -t 64 -fs 1
 ```
 results are in [outputs/ffuf.results](outputs/ffuf.results).
 
-I looked at the files and found an intersting find at /etc/ssh/sshd_config. remember Gyles said to Dale: "make a copy of your "id_rsa" and place this in the relevent config file."? Well, he did.
+I looked at the files and discovered something interesting at /etc/ssh/sshd_config. remember Gyles said to Dale: "make a copy of your "id_rsa" and place this in the relevent config file."? Well, he did.
 
 it was there:
 
@@ -156,13 +155,13 @@ I saved the key using:
 leafpad id_rsa
 ```
 
-Well. now that I have the key and username, I want to try a ssh connection.
+With both the username and private key available, I attempted to connect to the target machine using SSH.
 
 ---
 
 ## 8. Connecting using SSH: 🔐
-(Paused for lunch here and the machine turned off. I restarted it and it changed it's IP to 10.112.174.79)
-I had an error saying the key is not protected because it's permissions should only allow me to use it. so I changed the permissions to 600 using:
+(For context's sake, I paused here and the machine turned off. I restarted it and it changed it's IP to 10.112.174.79)
+I had an error saying the key is not protected because its permissions should only allow me to use it. so I changed the permissions to 600 using:
 
 ```bash
 chmod 600 id_rsa
@@ -174,9 +173,9 @@ and it worked!
 
 ---
 
-## 9. Privilege Escaltion: 🧗🏼‍♂️
-I checked what commands I can sudo and found: "/home/gyles/admin_checks"
-I analyzed the script for vulnerabilities  and found it takes ANY error from the date stamp and directly executes it.
+## 9. Privilege Escalation: 🧗🏼‍♂️
+I wanted to know what commands I can use sudo for and discovered : "/home/gyles/admin_checks"
+I Analyzed the script for vulnerabilities  and found it takes ANY error from the date stamp and directly executes it.
 
 I wanted to manipulate it to get a shell as gyles.
 
@@ -190,7 +189,7 @@ and was given gyles's shell!
 
 ---
 
-## 10. You guessed it, MORE ESCALATION!! 🔝
+## 10. Privilege Escalation to Root 🔝
 I tried getting to root but didn't have the permissions needed. I tried to check for sudo commands but needed a password so I skipped. I checked for running processes with "ps aux" but the processes were cut out:
 
 <img width="919" height="1084" alt="Screen Shot 2026-06-27 at 20 06 08 PM" src="https://github.com/user-attachments/assets/e21ba4ae-bad7-4f44-b982-bddd5027c5c5" />
@@ -202,7 +201,7 @@ I checked "journalctl" to see if there was any recent activity by root that I ma
 I tried checking with crontab for any root activity and didn't find any for mine or root.
 <img width="799" height="513" alt="Screen Shot 2026-06-27 at 20 19 18 PM" src="https://github.com/user-attachments/assets/98edf13e-9aec-49da-b1b7-19099b02e2b5" />
 
-I then tried checking specificly for scheduled tasks in the /var/log/syslog using:
+I then tried checking specifically for scheduled tasks in the /var/log/syslog using:
 
 ```bash
 grep -i cron /var/log/syslog
@@ -213,10 +212,10 @@ Nothing.
 <img width="562" height="39" alt="Screen Shot 2026-06-27 at 20 21 33 PM" src="https://github.com/user-attachments/assets/5c49b3a0-b5c8-4e5a-90e6-1d46bbcdab8e" />
 
 
-I couldn't find any low-hanging fruits with the common privilege escaltion so I looked for less obvious indicators. I checked in my home directory using ls -a for hidden files and found a few files:
+I couldn't find any low-hanging fruits with the common privilege escalation so I looked for less obvious indicators. I checked in my home directory using ls -a for hidden files and found a few files:
 (screenshot was not taken).
 I began checking for .sudo_as_admin_successful for it's contents but it was an empty file.
-I read .bash_history to find clues to something I can use to escalte my privileges with and gain information on the actions taken on the system, here is what I could understand and find:
+I read .bash_history to find clues to something I can use to escalate my privileges with and gain information on the actions taken on the system, here is what I could understand and find:
 1. the user created a reverse shell using php at /usr/bin/php
 2. he created scripts at the following paths:
 > - /usr/local/bin/main_backup.sh 
@@ -228,12 +227,12 @@ I looked into /opt/admin_stuff and found the script.sh:
 
 <img width="567" height="262" alt="צילום מסך 2026-06-28 ב-9 20 15" src="https://github.com/user-attachments/assets/46db0a14-3891-40bd-af2c-a334558fadac" />
 
-So now I know main_backup.sh and dev.backup.sh runs automatically every minute due to the cronjob but I dont know by who. using ps auxww didn't help catching the process so I looked for a tool that could help me list all the processes and scripts running on the machine WITHOUT root access. I stumbled across pspy. I looked for a training related to it and found one at [Privelege Escalation Training](https://tryhackme.com/module/privilegeescalation) and I havn't gone over it yet so I took a break and learned it.
+So now I know main_backup.sh and dev.backup.sh runs automatically every minute due to the cronjob but I don't know by who. using ps auxww didn't help catching the process so I looked for a tool that could help me list all the processes and scripts running on the machine WITHOUT root access. I stumbled across pspy. I looked for a training related to it and found one at [Privelege Escalation Training](https://tryhackme.com/module/privilegeescalation) and I hadn't studied it yet so I took a break and learned it.
 
 ---
 
-## 11. Using Pspy to analyse main_backup.sh: 🫆
-I downloaded the pspy64 file, created a python HTTP server, transfered the tool to the target machine, gave it executing privilieges and made ran it in the system.
+## 11. Using Pspy to  main_backup.sh: 🫆
+I downloaded the pspy64 file, created a python HTTP server, transferred the tool to the target machine, gave it executing privileges and ran it in the system.
 <img width="1713" height="427" alt="צילום מסך 2026-06-28 ב-9 53 50" src="https://github.com/user-attachments/assets/c99dc0f4-5f70-4f04-91e3-ef2151fe0512" />
 I found that **UID=0 (=root) runs "main_backup.sh"**.
 
@@ -257,7 +256,7 @@ and we got the root access!
 ---
 
 ## Key Takeaways: 🧠
-1. Giving root access to a simple process like copying a file and pasting it in a different folder was proven to be a mistake. espcially if not only the root is able to edit the cronjob's script.
+1. Giving root access to a simple process like copying a file and pasting it in a different folder was proven to be a mistake. especially if not only the root is able to edit the cronjob's script.
 2. pspy was proven to be an efficient tool to capture processes and cronjobs that aren't always easy to find using ps. 
 3. Taking breaks helped during long rooms helped me stay calm and helped me think outside of the box.
 
