@@ -44,7 +44,7 @@ I found 2 points of interest in the source code:
 A quick and easy way to unveil such messages, files or images is by using the command:
 
 ```bash
-stegseek --crack {file}
+stegseek {file}
 ```
 
 It is simple, efficient and very beginner friendly.
