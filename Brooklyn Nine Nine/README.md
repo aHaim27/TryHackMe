@@ -17,7 +17,7 @@ nmap -sCV -T4 -A -O 10.114.148.7
 >- port 22 - ssh
 >- port 80 - http
 
-You can check the full result [Here](outputs/nmap_resut).
+You can check the full result [Here](outputs/nmap_result).
 
 ---
 
