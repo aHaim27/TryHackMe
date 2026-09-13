@@ -1,4 +1,4 @@
-## TryHackMe | Brooklyn Nine Nine 🚓
+## [TryHackMe | Brooklyn Nine Nine 🚓](https://tryhackme.com/room/brooklynninenine)
 This room is aimed for beginner level hackers but anyone can try to hack this box. There are two main intended ways to root the box.
 
 <img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/f949f162-b92d-441d-85e4-8686a47dc47f" />
