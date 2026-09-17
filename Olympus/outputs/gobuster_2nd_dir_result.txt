@@ -1,0 +1,4 @@
+/uploads             [36m (Status: 301)[0m [Size: 322][34m [--> http://chat.olympus.thm/uploads/][0m
+/static              [36m (Status: 301)[0m [Size: 321][34m [--> http://chat.olympus.thm/static/][0m
+/javascript          [36m (Status: 301)[0m [Size: 325][34m [--> http://chat.olympus.thm/javascript/][0m
+/phpmyadmin          [33m (Status: 403)[0m [Size: 281]
