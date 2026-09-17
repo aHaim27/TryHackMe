@@ -40,7 +40,7 @@ I then moved to enumerating the website using `gobuster dir` with a common list 
 The command I used was:
 
 ```bash
-gobuster dir -u `http://olympus.thm` -w ~/wordlists/dirb/common.txt
+gobuster dir -u http://olympus.thm -w ~/wordlists/dirb/common.txt
 ```
 
 The one I wanted to check first was `/~webmaster` since it was the most unusual to me.
@@ -59,7 +59,7 @@ I then stopped to write down all the information I had until now to summarize th
 
 1. The machine has a web application on port 80 using http protocol and redirects a user to a site on the URL `http://olympus.thm`
 2. The machine also has the ssh service open on port 22. I need to find credentials to use it.
-3. The machine is related to the greek mythology. If neeeded, I will be able to create a wordlist using either LLM or a script to pull from `relatedwords.com`.
+3. The machine is related to the greek mythology. If needed, I will be able to create a wordlist using either LLM or a script to pull from `relatedwords.com`.
 4. The web application on the machine has a page on `/~webmaster` regarding posts related to weak credentials on a user and has the ability to use a search bar and login creds input.
 5. The web application has a string saying `"Victor's CMS"` on the header of the page.
 6. There is a user named `root` on the machine that posted 2 posts.
@@ -155,21 +155,21 @@ By this point I had credentials for prometheus anyways so I moved to login with 
 
 ---
 
-## 6. Using prometheus's credentials to enumarte: 🔍
+## 6. Using prometheus's credentials to enumerate: 🔍
 
-I signed into the website using prometheus's account and got into the `CMS admin page` and looked for other known vulnerabilites I could use using my current privileges.
+I signed into the website using prometheus's account and got into the `CMS admin page` and looked for other known vulnerabilities I could use using my current privileges.
 
 I tried using [Victor CMS 1.0 - Authenticated Arbitrary File Upload](https://www.exploit-db.com/exploits/48490) which uses a vulnerable `GET parameter '/admin/users.php?source=add_user'` but I when using it I didn't have access to the `/img` folder and my file.
 
-I kept diging and went to the users page and saw the users table from earlier and saw the email root and zeus have are related to some sort of sub-domain named `chat.olympus.thm` which I couldn't get using `gobuster vhost` from earlier.
+I kept digging and went to the users page and saw the users table from earlier and saw the email root and zeus have are related to some sort of sub-domain named `chat.olympus.thm` which I couldn't get using `gobuster vhost` from earlier.
 
 I could swear the wordlist included the word "chat". I investigated further and with the help of an LLM I managed to understand where the point of failure was.
 
-The `chat` sub-domain does show a location named `login.php` but everything other then the location is identical to any other non-existing sub-domain (error number, Content-Length, etc...) which probably made `gobuster` to not find it.
+With my initial VHost enumeration, the status code and response size did not distinguish `chat.olympus.thm` from invalid hosts. Manual comparison revealed that the `Location` header was different.
 
 <img width="688" height="164" alt="image" src="https://github.com/user-attachments/assets/1140fb9c-d056-4199-a2ed-8cb8efaf81fc" />
 
-I wanted to scan for more sub-domains using by filtering the location paramter and used ChatGPT to create a script that will enumarte the sub-domains based on my desired filter.
+I wanted to scan for more sub-domains using by filtering the location parameter and used ChatGPT to create a script that will enumerate the sub-domains based on my desired filter.
 
 The script:
 
@@ -182,7 +182,7 @@ The script:
 
 You can use it yourself by copying the content or downloading it and running it on your Linux machine [here](scripts/vhost_enum.sh).
 
-The script helped me verify there were no other sub-domains I missed other then `chat` and so I moved to adding it to the `/etc/hosts` file and accessed the web application.
+The script did not identify any additional VHosts from this wordlist, so I moved on to adding `chat.olympus.thm` to the `/etc/hosts` file and accessed the web application.
 
 ---
 
@@ -194,7 +194,7 @@ The login page had a username and password input so I used prometheus's creds an
 
 <img width="1001" height="938" alt="image" src="https://github.com/user-attachments/assets/edd96481-c2ec-451a-b4c1-715205c83322" />
 
-I tried accessing the `prometheus_password.txt` file from earlier using the hashed new name but the file wasn't uploaded to the current directory. I used `gobuster` again for directory enumaration using the following command:
+I tried accessing the `prometheus_password.txt` file from earlier using the hashed new name but the file wasn't uploaded to the current directory. I used `gobuster` again for directory enumeration using the following command:
 
 ```bash
 gobuster dir -u 'http://chat.olympus.thm' -w wordlists/dirbuster/directory-list-2.3-small.txt
@@ -216,13 +216,13 @@ I stopped here for a quick summary:
 My current new current goal:
 
 1. Get access to the machine's file system using a shell interface with basic privileges
-2. After getting basic privileges, understand how to escalte my privileges.
+2. After getting basic privileges, understand how to escalate my privileges.
 
 ---
 
 ## 8. Getting shell interface: 🐚
 
-I wanted to create a reverse shell to the machine using a `.php` file. I didn't know if there's any filter for what type of file I can upload or view but I tried to check if it works anyway. I opened a `nc` listener and created a `.php` reverse shell command and uploaded it to the chat. The command I used is a `PHP PentestMonkey` for it's better stability. you can view it [here](scrips/revshell.php)
+I wanted to create a reverse shell to the machine using a `.php` file. I didn't know if there's any filter for what type of file I can upload or view but I tried to check if it works anyway. I opened a `nc` listener and created a `.php` reverse shell command and uploaded it to the chat. The command I used is a `PHP PentestMonkey` for it's better stability. you can view it [here](scripts/revshell.php)
 
 I then used `sqlmap` to show me a fresh view of the table `"chats"` and I was able to find the `.php` file I uploaded with it's new name. The command I used is:
 
@@ -251,7 +251,7 @@ I figured that if prometheus has some way of accessing the machine with super-us
 I searched for applications with the SUID bit set that I could potentially abuse to execute actions with elevated privileges using:
 
 ```bash
-find / -perm -4000 -type f 2>/dev/null /
+find / -perm -4000 -type f 2>/dev/null
 ```
 
 I found I can use a binary called `cputils` which I wasn't familiar with. I searched it on Google and found the following information:
@@ -270,13 +270,13 @@ I stopped to think about what I want my following steps to be.
 
 Here is what I knew so far:
 1. I knew I wanted to gain a shell to the system in order to look around the file system.
-2. I knew I could access CPutils but not use it on any files with my current privileges.
+2. My initial copy attempts failed, so I still did not fully understand what cputils could access.
 3. I knew there is a backdoor running which allows prometheus to have super-user privileges but I didn't know where or what the name of the backdoor might be.
 4. I knew there are 2 services running: http and ssh.
 
-After some thought I got to a conclusion that I want to give more time to enumration on the file system with my current privileges and to not try yet to esclate my privileges.
+After some thought I got to a conclusion that I want to give more time to enumeration on the file system with my current privileges and to not try yet to escalate my privileges.
 
-I divided in my mind 2 file systems I care about:
+I divided the filesystem enumeration into two areas of interest: user data and web application files.
 1. The files of the users on the machine (regarding the ssh service)-> which I felt like I exhausted the mapping of with my current privileges.
 2. The files of the http service (regarding the http service) -> which I didn't actually look at yet.
 
@@ -288,9 +288,9 @@ I didn't have privileges to open it but zeus did.
 
 <img width="806" height="157" alt="image" src="https://github.com/user-attachments/assets/3ea96bb3-bd63-47ec-a462-c3a6925263df" />
 
-I wanted to gain access to zeus's account to get inside that folder. I checked his home directory again and noticed he has a `.ssh` directory which may imply he has an id_rsa there I might be able to copy using CPutil. (I could use `cat` on it since I didn't have suiting privileges.)
+I wanted to gain access to zeus's account to get inside that folder. I checked his home directory again and noticed he has a `.ssh` directory which may imply he has an id_rsa there I might be able to copy using CPutil. (I couldn't use `cat` on it because I didn't have sufficient privileges.)
 
-After trying to get inside the `.ssh` folder, I tried copying the file from outside of it on `/home/zeus` and got CPutils to copy the `id_rsa` successfuly.
+After trying to get inside the `.ssh` folder, I tried copying the file from outside of it on `/home/zeus` and got CPutils to copy the `id_rsa` successfully.
 
 I copied the content of the id_rsa and used it to connect to the machine but got asked for a passphrase:
 
@@ -316,9 +316,9 @@ The file basically says the following thing:
 - The .php acts as a reverse-shell wrapper around the pre-existing SUID backdoor located at the above path.
 - The .php is defended by a password shown on the header of the file.
 
-To access the .php file, since it's not under any site but rather under the `/var/www/html/0aB44fdS3eDnLkpsz3deGv8TttR4sc` of the machine itself.
+The backdoor was stored under `/var/www/html`, which was Apache's default DocumentRoot rather than the DocumentRoot of the named `olympus.thm` or `chat.olympus.thm` VirtualHosts. Accessing the target directly by IP caused Apache to serve the default VHost, allowing me to reach the PHP file.
 
-We use the browser to access `http://10.114.143.15/0aB44fdS3eDnLkpsz3deGv8TttR4sc/VIGQFQFMYOST.php` and then put the password in and get transfered to a different site with the following instructions:
+I used the browser to access `http://10.114.151.214/0aB44fdS3eDnLkpsz3deGv8TttR4sc/VIGQFQFMYOST.php`. After submitting the hard-coded password, the same PHP script displayed its usage instructions and requested an IP address and listener port:
 
 <img width="1093" height="306" alt="image" src="https://github.com/user-attachments/assets/5f7d79fb-1632-4e60-895e-e299e80dcc04" />
 
@@ -336,7 +336,7 @@ I couldn't get to see the entire flag so I moved it to `/var/www/html` and looke
 
 ## 10. The bonus flag: 🏳️
 
-to accesss root over ssh I created a temporary private key and added a public key to the autherized keys on the root's target machine and refreshed the permissions.
+to access root over ssh I created a temporary private key and added a public key to the authorized keys on the root's target machine and refreshed the permissions.
 
 Then, I saw in the TryHackMe site a hint to the fourth flag that mentions the flag is located at `/etc`.
 I searched for the string `"flag{"` and got a hit on the fourth flag
@@ -345,15 +345,19 @@ I searched for the string `"flag{"` and got a hit on the fourth flag
 
 ---
 
-## Key takeaways:
+## Key Takeaways 🧠
 
-1. Enumaration is a constant process and not a one-time thing at the begining of the room. This room had a lot of scattered information which made me practice constant enumaration. It felt like a weakness of mine and practicing it was very helpful.
+1. **Enumeration is a continuous process, not a one-time step at the beginning of an assessment.**  
+   Olympus contained information scattered across the web application, database, filesystem, user accounts, and configuration. Every new finding created another enumeration opportunity.
 
-2. `gobuster` may not be able to identify vhosts if the packet is nearly identical to it's default filters. In cases like this, scripting and manual analysis is required and it felt like it was well executed in this scenario.
+2. **Default tool output should always be validated when something does not make sense.**  
+   My initial VHost enumeration did not reveal `chat.olympus.thm`. By manually comparing responses, I discovered that the useful difference was in the `Location` header and built a small script to enumerate based on that behavior.
 
-3. Using found vulnerabilities served me more than once per vulnerability. chaining them and re-using them for different purposes was a creative need in this scenario.
+3. **A vulnerability can provide more than one type of information and can often be chained with other weaknesses.**  
+   The SQL injection was initially useful for database enumeration, but I later reused it to recover renamed upload filenames. Combining information from multiple weaknesses was essential to progressing through the room.
 
-4. Not waiting for all the other hashed passwords to crack for 8 hours but using the ones I found first was enough to gain initial access and escalate later.
+4. **You do not always need to fully exhaust one path before using the information it already provided.**  
+   Cracking a single useful bcrypt password was enough to continue the attack path, so waiting several additional hours for every remaining hash would not have provided immediate value.
 
 ---
 
